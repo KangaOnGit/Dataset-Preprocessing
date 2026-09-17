@@ -195,7 +195,7 @@ For a normal training slice:
 ```python
 import numpy as np
 
-path = "Synapse Abdomen Preprocessed/Train/case0001_slice001.npz"
+path = "./Synapse Abdomen Preprocessed/Train/case0001_slice001.npz"
 data = np.load(path)
 
 img = data["image"]
@@ -371,7 +371,7 @@ for old_label, new_label in label_mapping.items():
 ```python
 import numpy as np
 
-sample = np.load("Synapse Abdomen Preprocessed/Train/case0001_slice001.npz")
+sample = np.load("./Synapse Abdomen Preprocessed/Train/case0001_slice001.npz")
 image = sample["image"]
 label = sample["label"]
 
@@ -389,7 +389,7 @@ This tells you:
 ```python
 import h5py
 
-with h5py.File("Synapse Abdomen Preprocessed/Test/case0001.npy.h5", "r") as f:
+with h5py.File("././Synapse Abdomen Preprocessed/Test/case0001.npy.h5", "r") as f:
     image = f["image"][:]
     label = f["label"][:]
 

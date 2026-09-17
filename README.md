@@ -1,4 +1,4 @@
-# Data-Preprocess
+# Dataset Preprocessing
 
 A repository for preprocessing and organizing datasets used in biomedical and computer vision experiments. The project currently focuses on medical image segmentation datasets, with each dataset prepared into a clean, model-ready format for training, validation, and inference.
 
@@ -18,8 +18,8 @@ The Synapse Abdomen dataset is processed for abdominal organ segmentation.
 
 Relevant files:
 
-- [Medical Data/CV/Segmentation/Synapse/Synapse_README.md](Medical%20Data/CV/Segmentation/Synapse/Synapse_README.md)
-- [Medical Data/CV/Segmentation/Synapse/Preprocess.ipynb](Medical%20Data/CV/Segmentation/Synapse/Preprocess.ipynb)
+- [medical/cv/segmentation/Synapse/Synapse_README.md](medical/cv/segmentation/Synapse/Synapse_README.md)
+- [medical/cv/segmentation/Synapse/Preprocess.ipynb](medical/cv/segmentation/Synapse/Preprocess.ipynb)
 
 Key preprocessing characteristics:
 
@@ -36,8 +36,8 @@ The MoNuSeg dataset is processed for nuclei instance segmentation.
 
 Relevant files:
 
-- [Medical Data/CV/Segmentation/MoNuSeg/MoNuSeg_README.md](Medical%20Data/CV/Segmentation/MoNuSeg/MoNuSeg_README.md)
-- [Medical Data/CV/Segmentation/MoNuSeg/Preprocess.ipynb](Medical%20Data/CV/Segmentation/MoNuSeg/Preprocess.ipynb)
+- [medical/cv/segmentation/MoNuSeg/MoNuSeg_README.md](medical/cv/segmentation/MoNuSeg/MoNuSeg_README.md)
+- [medical/cv/segmentation/MoNuSeg/Preprocess.ipynb](medical/cv/segmentation/MoNuSeg/Preprocess.ipynb)
 
 Key preprocessing characteristics:
 
@@ -55,11 +55,11 @@ Key preprocessing characteristics:
 Data-Preprocess/
 ├── LICENSE
 ├── README.md
-├── Medical Data/
-│   ├── CV/
-│   │   ├── Object Detection/
+├── medical/
+│   ├── cv/
+│   │   ├── object_detection/
 │   │   │   └── (reserved for object detection datasets)
-│   │   └── Segmentation/
+│   │   └── segmentation/
 │   │       ├── MoNuSeg/
 │   │       │   ├── Preprocess.ipynb
 │   │       │   ├── MoNuSeg_README.md
@@ -68,7 +68,7 @@ Data-Preprocess/
 │   │           ├── Preprocess.ipynb
 │   │           ├── Synapse_README.md
 │   │           └── Synapse Abdomen Preprocessed/
-│   └── NLP/
+│   └── nlp/
 │       └── (reserved for NLP datasets and preprocessing pipelines)
 ```
 
@@ -92,7 +92,7 @@ import numpy as np
 
 # Load Synapse training sample
 sample = np.load(
-    "Medical Data/CV/Segmentation/Synapse/Synapse Abdomen Preprocessed/Train/case0001_slice001.npz"
+    "medical/cv/segmentation/Synapse/Synapse Abdomen Preprocessed/Train/case0001_slice001.npz"
 )
 image = sample["image"]
 label = sample["label"]
@@ -107,10 +107,10 @@ import numpy as np
 
 # Load MoNuSeg image and mask
 image = np.array(
-    Image.open("Medical Data/CV/Segmentation/MoNuSeg/monuseg_converted/training/images/image_001.png")
+    Image.open("medical/cv/segmentation/MoNuSeg/monuseg_converted/training/images/image_001.png")
 )
 mask = np.load(
-    "Medical Data/CV/Segmentation/MoNuSeg/monuseg_converted/training/labels/image_001.npy"
+    "medical/cv/segmentation/MoNuSeg/monuseg_converted/training/labels/image_001.npy"
 )
 
 print(image.shape, image.dtype)

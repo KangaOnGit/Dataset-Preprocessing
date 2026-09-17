@@ -301,7 +301,7 @@ The final converted dataset contains:
 from PIL import Image
 import numpy as np
 
-img = np.array(Image.open("monuseg_converted/training/images/image_001.png"))
+img = np.array(Image.open("./monuseg_converted/training/images/image_001.png"))
 print(img.shape, img.dtype)
 ```
 
@@ -314,7 +314,7 @@ Expected:
 ### Load a mask
 
 ```python
-mask = np.load("monuseg_converted/training/labels/image_001.npy")
+mask = np.load("./monuseg_converted/training/labels/image_001.npy")
 print(mask.shape, mask.dtype)
 print(np.unique(mask))
 ```
@@ -352,7 +352,7 @@ A common training setup would do one of the following:
 ### Example binary conversion
 
 ```python
-mask = np.load("monuseg_converted/training/labels/image_001.npy")
+mask = np.load("./monuseg_converted/training/labels/image_001.npy")
 binary_mask = (mask > 0).astype(np.uint8)
 print(binary_mask.shape, binary_mask.dtype)
 print(np.unique(binary_mask))
