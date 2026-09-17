@@ -417,3 +417,6 @@ The key point to remember is:
 - both use `float32` for images and `uint8` for labels
 
 This is the core format you should use whenever reading the dataset back into a training or evaluation script.
+
+---
+Synapse can be download [here](https://www.synapse.org/Synapse:syn3553734)
