@@ -397,14 +397,10 @@ The dataset is converted into a clean structure where:
 - each nucleus gets its own integer label in the mask
 - training and testing folders are created separately
 - the output is designed for segmentation pipelines and easy DataLoader usage
-
-When you revisit the data later, the key thing to remember is:
-
 - image arrays are grayscale microscopy images
 - label arrays are instance-level nuclei masks
 - a pixel value of `0` is background
 - a positive nonzero value indicates a nucleus instance ID
 
-This is the most important behavior of the MoNuSeg preprocessing pipeline.
 ---
 MoNuSeg can be download [here](https://monuseg.grand-challenge.org/Data/)
