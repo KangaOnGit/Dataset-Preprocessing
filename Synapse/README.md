@@ -1,5 +1,4 @@
-## The Synapse Abdomen Dataset was preprocessed using TransUNet's Methods:
-[TransUNet](https://github.com/Beckschen/TransUNet/tree/main/datasets)
+## The Synapse Abdomen Dataset was preprocessed using TransUNet's Methods: [TransUNet](https://github.com/Beckschen/TransUNet/tree/main/datasets)
 
 Please note that the preprocessed data retains the original 13 Labels of the Abdomen Dataset. Please remap the labels yourself.
 ```python
