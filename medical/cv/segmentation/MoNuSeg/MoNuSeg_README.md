@@ -1,10 +1,22 @@
 # MoNuSeg Dataset Preprocessing
 
-This preprocessing pipeline converts the original MoNuSeg dataset into a clean training/testing structure that is easier to use for nuclei segmentation experiments. The workflow in the notebook does three main things:
+This preprocessing pipeline converts the original MoNuSeg dataset into a clean training/testing structure that is easier to use for nuclei segmentation experiments. The workflow uses two notebooks:
 
-1. Finds the original image and annotation directories in the source dataset
-2. Copies the files into a prepared folder structure
-3. Converts the TIFF images and XML annotations into a model-friendly format
+1. `preprocess_1.ipynb` finds the original image and annotation directories, copies the files, and converts TIFF images and XML annotations into PNG images and NumPy masks.
+2. `preprocess_2.ipynb` optionally splits the prepared training images into training and validation subsets.
+
+## Recommended Validation Strategy
+
+MoNuSeg has a very small training set. Running a fixed 80/20 validation split may leave the validation subset with poor organ or tissue coverage, making validation results unreliable.
+
+For this reason, the recommended workflow is:
+
+- Run only `preprocess_1.ipynb` by default.
+- Train on the complete `training/` folder and evaluate on the official `testing/` folder.
+- Use k-fold cross-validation instead of a fixed validation split when validation during development is required.
+- Do not run `preprocess_2.ipynb` for routine training unless the resulting patient balance is explicitly appropriate.
+
+`preprocess_2.ipynb` is retained as an optional utility for experiments that need a fixed validation split.
 
 The final output is organized as:
 
@@ -30,6 +42,42 @@ monuseg_converted/
 │       └── ...
 └── ...
 ```
+
+---
+
+## Optional Fixed Training/Validation Split
+
+`preprocess_2.ipynb` reads a prepared MoNuSeg dataset and can create an additional validation split:
+
+```text
+SRC_DIR = "/kaggle/input/datasets/kangaonkaggle/monuseg-preprocessed/MoNuSeg"
+DEST_DIR = "./monuseg_preprocessed"
+VAL_FRAC = 0.20
+SEED = 42
+GROUP_BY = "patient"
+```
+
+The default grouping mode extracts TCGA patient IDs from filenames and keeps images from the same patient in only one of the training or validation subsets. Images without an identifiable TCGA patient ID are treated as individual groups.
+
+The optional output is organized as:
+
+```text
+monuseg_preprocessed/
+├── training/
+│   ├── images/
+│   └── labels/
+├── validation/
+│   ├── images/
+│   └── labels/
+├── testing/
+│   ├── images/
+│   └── labels/
+└── split.json
+```
+
+`split.json` records the split settings and the exact training, validation, testing, and validation-group lists. This is useful for reproducing the experiment and confirming that patient groups were assigned consistently.
+
+The fixed split should be used cautiously. A validation set of approximately 20% can be too small or unrepresentative for MoNuSeg and may not include sufficient coverage of every tissue source. Prefer k-fold cross-validation over this split when a held-out validation measurement is needed.
 
 ---
 
@@ -290,6 +338,18 @@ The final converted dataset contains:
 - Files: `.npy`
 - Shape: `(1000, 1000)`
 - dtype: integer labels representing nucleus instances
+
+### Optional validation images and labels
+
+When `preprocess_2.ipynb` is run:
+
+- Folder: `validation/images`
+- Files: `.png`
+- Folder: `validation/labels`
+- Files: `.npy`
+- Image and label shapes and types match the training split
+
+The validation split should be considered experimental for MoNuSeg; the recommended default remains training on all prepared training images and testing on the official test images.
 
 ---
 
