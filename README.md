@@ -1,160 +1,133 @@
 # Dataset Preprocessing
 
-A repository for preprocessing and organizing datasets used in biomedical and computer vision experiments. The project currently focuses on medical image segmentation datasets, with each dataset prepared into a clean, model-ready format for training, validation, and inference.
+This repository contains reproducible preprocessing workflows for biomedical datasets used in computer vision and segmentation experiments.
 
-## Repository Purpose
-
-This repository stores dataset processing workflows and preprocessed outputs for segmentation tasks. The goal is to take raw public datasets, standardize their structure, and save the results in formats that are easy to load and use in machine learning pipelines.
-
-The project is designed for reproducibility and ease of reuse. Once processed, the data are organized into clear training/testing directories with consistent file naming, data types, and label conventions.
-
----
-
-## Included Datasets
-
-### 1. Synapse Abdomen
-
-The Synapse Abdomen dataset is processed for abdominal organ segmentation.
-
-Relevant files:
-
-- [medical/cv/segmentation/Synapse/Synapse_README.md](medical/cv/segmentation/Synapse/Synapse_README.md)
-- [medical/cv/segmentation/Synapse/Preprocess.ipynb](medical/cv/segmentation/Synapse/Preprocess.ipynb)
-
-Key preprocessing characteristics:
-
-- Training samples are sliced into 2D images of shape `(512, 512)`
-- Test samples remain 3D volumes of shape `(512, 512, num_slices)`
-- Input intensities are clipped and normalized to `[0, 1]`
-- Training outputs are saved as `.npz` files with keys `image` and `label`
-- Test outputs are saved as HDF5 files with datasets `image` and `label`
-- Original dataset labels are retained and must be remapped for model training
-
-### 2. MoNuSeg
-
-The MoNuSeg dataset is processed for nuclei instance segmentation.
-
-Relevant files:
-
-- [medical/cv/segmentation/MoNuSeg/MoNuSeg_README.md](medical/cv/segmentation/MoNuSeg/MoNuSeg_README.md)
-- [medical/cv/segmentation/MoNuSeg/Preprocess.ipynb](medical/cv/segmentation/MoNuSeg/Preprocess.ipynb)
-
-Key preprocessing characteristics:
-
-- Microscopy images are resized to `(1000, 1000)`
-- XML polygon annotations are converted into instance masks
-- Output images are saved as PNG files
-- Output labels are saved as `.npy` arrays
-- Masks are instance segmentation maps, where `0` is background and nonzero values represent different nuclei
-
----
+Each dataset is converted into a consistent, model-ready structure and documented separately in its own README. Raw datasets are not stored in this repository.
 
 ## Repository Structure
 
 ```text
 Data-Preprocess/
-├── LICENSE
 ├── README.md
-├── medical/
-│   ├── cv/
-│   │   ├── object_detection/
-│   │   │   └── (reserved for object detection datasets)
-│   │   └── segmentation/
-│   │       ├── MoNuSeg/
-│   │       │   ├── Preprocess.ipynb
-│   │       │   ├── MoNuSeg_README.md
-│   │       │   └── monuseg_converted/
-│   │       └── Synapse/
-│   │           ├── Preprocess.ipynb
-│   │           ├── Synapse_README.md
-│   │           └── Synapse Abdomen Preprocessed/
-│   └── nlp/
-│       └── (reserved for NLP datasets and preprocessing pipelines)
+├── LICENSE
+└── medical/
+    ├── cv/
+    │   ├── segmentation/
+    │   │   ├── Synapse/
+    │   │   ├── MoNuSeg/
+    │   │   ├── GlaS/
+    │   │   └── EBHI (Adenocarcinoma)/
+    │   └── object_detection/
+    └── nlp/
 ```
 
----
+## Segmentation Datasets
 
-## Typical Dataset Usage
+### Synapse Abdomen
 
-Each dataset is prepared so that it can be used directly in segmentation experiments.
+[Synapse dataset README](medical/cv/segmentation/Synapse/Synapse_README.md)
 
-### General pattern
+Notebooks:
 
-- Images are represented as NumPy arrays or image files
-- Labels are represented as mask arrays or dictionary entries
-- Training splits are saved separately from testing splits
-- File naming is consistent to help match image and label pairs
+- `preprocess_1.ipynb` converts NIfTI volumes into normalized 2D training slices and 3D test volumes.
+- `preprocess_2.ipynb` splits the training cases by case into approximately 80% training and 20% validation.
 
-### Example usage
+Output includes:
 
-```python
-import numpy as np
+- 2D `.npz` training and validation slices
+- 3D `.npy.h5` test volumes
+- Optional reconstructed validation volumes
+- `train.txt`, `val.txt`, `val_vol.txt`, and `test_vol.txt`
 
-# Load Synapse training sample
-sample = np.load(
-    "medical/cv/segmentation/Synapse/Synapse Abdomen Preprocessed/Train/case0001_slice001.npz"
-)
-image = sample["image"]
-label = sample["label"]
+### MoNuSeg
 
-print(image.shape, image.dtype)
-print(label.shape, label.dtype)
-```
+[MoNuSeg dataset README](medical/cv/segmentation/MoNuSeg/MoNuSeg_README.md)
 
-```python
-from PIL import Image
-import numpy as np
+Notebooks:
 
-# Load MoNuSeg image and mask
-image = np.array(
-    Image.open("medical/cv/segmentation/MoNuSeg/monuseg_converted/training/images/image_001.png")
-)
-mask = np.load(
-    "medical/cv/segmentation/MoNuSeg/monuseg_converted/training/labels/image_001.npy"
-)
+- `preprocess_1.ipynb` converts TIFF images and XML polygon annotations into PNG images and instance masks.
+- `preprocess_2.ipynb` provides an optional patient-level 80/20 training/validation split.
 
-print(image.shape, image.dtype)
-print(mask.shape, mask.dtype)
-print(np.unique(mask))
-```
+The MoNuSeg training set is small. For routine experiments, the recommended approach is to:
 
----
+- run only `preprocess_1.ipynb`;
+- train on the complete official training set; and
+- use k-fold cross-validation, or evaluate directly on the official test set.
 
-## Notes on Data Handling
+The fixed validation split can be useful for experiments, but should be used with care because a validation subset may not contain representative tissue coverage.
 
-- Some datasets retain original source labels and require custom remapping before training.
-- Image intensities are sometimes normalized into `[0, 1]` for model stability.
-- Segmentation masks may be either semantic masks or instance masks depending on the dataset.
-- Always inspect the dataset-specific README before training to confirm label semantics and output structure.
+### GlaS
 
----
+[GlaS dataset README](medical/cv/segmentation/GlaS/GlaS_README.md)
+
+`preprocess.ipynb` copies the original BMP images and masks into training, validation, Test A, Test B, and combined Test A/B folders. Training images are deterministically split into approximately 80% training and 20% validation, and masks receive a `_mask` suffix.
+
+Output includes:
+
+- `train/images` and `train/masks`
+- `val/images` and `val/masks`
+- `testA/images` and `testA/masks`
+- `testB/images` and `testB/masks`
+- `testAB/images` and `testAB/masks`
+
+### EBHI-SEG Adenocarcinoma
+
+[EBHI Adenocarcinoma dataset README](<medical/cv/segmentation/EBHI (Adenocarcinoma)/EBHI_Adenocarcinoma_README.md>)
+
+`preprocess.ipynb` pairs source images with labels, creates reproducible training, validation, and test splits, copies both modalities into each split, and adds `_mask` to mask filenames.
+
+The default split is approximately:
+
+- 72.25% training
+- 12.75% validation
+- 15% test
+
+## General Output Conventions
+
+The preprocessing workflows generally follow these conventions:
+
+- images and masks are stored in separate directories;
+- matching samples use a common filename stem;
+- masks may include a configurable suffix such as `_mask`;
+- training, validation, and test splits are separated;
+- original label values and formats are preserved unless the dataset README states otherwise;
+- split metadata or list files are written when required by the downstream training pipeline.
+
+Always inspect the dataset-specific README before training because formats, label semantics, and validation recommendations differ by dataset.
+
+## Output Formats
+
+| Dataset | Images | Masks/labels |
+|---|---|---|
+| Synapse | 2D `.npz` slices or 3D `.npy.h5` volumes | Included with each `.npz` or `.npy.h5` file |
+| MoNuSeg | `.png` images, resized to `1000 x 1000` | `.npy` instance masks |
+| GlaS | `.bmp` images | `.bmp` masks with `_mask` suffix |
+| EBHI Adenocarcinoma | PNG, JPG, JPEG, or BMP images | Matching masks with `_mask` suffix and preserved extension |
+
+## Validation Guidance
+
+- Split Synapse data by case to avoid leakage between slices belonging to the same case.
+- Keep the full MoNuSeg training set unless an experiment specifically requires a fixed holdout; otherwise use k-fold validation.
+- Verify class or tissue coverage when creating smaller validation splits.
+- Use the official test split for final evaluation unless the dataset documentation defines another protocol.
+
+## Data Handling Notes
+
+- Source datasets may require separate acceptance of their licenses or registration on their providers' websites.
+- Clipping, normalization, resizing, and label remapping are dataset-specific and are documented in each README.
+- Some datasets are mask-based, while MoNuSeg uses instance segmentation IDs.
+- Rerunning a notebook may recreate or overwrite the generated output directory.
 
 ## Intended Use
 
-This repository is intended for:
+This repository supports:
 
-- dataset preparation and preprocessing
-- reproducible segmentation experiments
-- storing model-ready data in a consistent structure
-- documenting label mappings, shapes, and output formats for future use
-
-It is especially useful when returning to older experiments and needing to know exactly how the data were generated and what each file contains.
-
----
+- reproducible dataset preparation;
+- biomedical segmentation experiments;
+- consistent image-mask pairing;
+- dataset-specific split documentation;
+- reuse of preprocessed datasets across training pipelines.
 
 ## License
 
-This repository is provided for educational and research use. Please respect the licensing and citation terms of each original dataset source.
-
----
-
-## Future Scope
-
-This repository can expand to include additional datasets beyond medical segmentation, such as:
-
-- other anatomical segmentation datasets
-- cell microscopy datasets
-- natural image segmentation datasets
-- NLP or text-based dataset preprocessing projects
-
-The structure is designed to scale as more preprocessing workflows are added.
+Please follow the license and citation requirements of each original dataset. The license for this repository is available in [LICENSE](LICENSE).
