@@ -274,3 +274,5 @@ Test:  ...
 5. Use the generated `processed_ebhi` directory with the configuration above.
 
 The output folder is recreated on every run, so do not store files that need to be preserved inside `DEST_DIR`.
+---
+EBHI can be download [here](https://www.kaggle.com/datasets/orvile/ebhi-seg-colorectal-cancer)

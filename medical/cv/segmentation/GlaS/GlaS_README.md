@@ -237,3 +237,6 @@ testB: { images: testB/images, masks: testB/masks }
 4. Use the generated `processed_glas` directory with the configuration shown above.
 
 The output folder is recreated on every run, so do not place files you need to preserve inside `DEST_DIR`.
+
+---
+GlaS can be download [here](https://academictorrents.com/details/208814dd113c2b0a242e74e832ccac28fcff74e5)
