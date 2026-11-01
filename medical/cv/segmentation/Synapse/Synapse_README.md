@@ -4,18 +4,31 @@ This repository preprocesses the Synapse Abdomen dataset in a way that is compat
 
 ## Overview
 
-The raw dataset is loaded from the Abdomen folder, where each patient case contains image volumes and label volumes stored as NIfTI files. The notebook loops through all available cases, performs intensity clipping and normalization, and then saves the results in two separate output formats:
+The raw dataset is loaded from the Abdomen folder, where each patient case contains image volumes and label volumes stored as NIfTI files. The workflow uses two notebooks:
+
+- `preprocess_1.ipynb` loads and preprocesses the raw NIfTI volumes, then saves 2D training slices and 3D test volumes.
+- `preprocess_2.ipynb` takes the output from the first notebook and splits the training cases into 80% training and 20% validation.
+
+The preprocessing saves results in three separate formats:
 
 - Training data: 2D slices saved as `.npz` files
+- Validation data: 2D slices saved as `.npz` files, plus optional reconstructed 3D volumes
 - Test data: 3D volumes saved as `.npy.h5` files
 
-The output folder is created as:
+After running both notebooks, the final output folder is created as:
 
 ```text
-Synapse Abdomen Preprocessed/
+Preprocessed/
 ├── Train/
 │   ├── case0001_slice001.npz
 │   ├── case0001_slice002.npz
+│   └── ...
+├── Val/
+│   ├── case0020_slice001.npz
+│   ├── case0020_slice002.npz
+│   └── ...
+├── Val_vol/
+│   ├── case0020.npy.h5
 │   └── ...
 ├── Test/
 │   ├── case0001.npy.h5
@@ -23,6 +36,8 @@ Synapse Abdomen Preprocessed/
 │   └── ...
 ├── Synapse Lists/
 │   ├── train.txt
+│   ├── val.txt
+│   ├── val_vol.txt
 │   └── test_vol.txt
 └── ...
 ```
@@ -87,6 +102,65 @@ test = ["0008", "0022", "0038", "0036", "0032", "0002", "0029", "0003", "0001", 
 ```
 
 Any case in `test` is treated as a full-volume test case. All other selected cases are split into 2D training slices.
+
+---
+
+## Training/Validation Split
+
+The first notebook creates 2D slices from the 18 selected training cases. The second notebook, `preprocess_2.ipynb`, splits these slices by case rather than by individual slice. This prevents slices from the same patient or case from leaking between training and validation.
+
+The split is configured with:
+
+```python
+VAL_SIZE = 0.20
+SEED = 42
+```
+
+The training cases are partitioned using:
+
+```python
+train_cases, val_cases = train_test_split(
+    case_ids,
+    test_size=VAL_SIZE,
+    random_state=SEED
+)
+```
+
+For the 18 training cases produced by `preprocess_1.ipynb`, this creates an approximately 80/20 case-level split:
+
+- 14 training cases
+- 4 validation cases
+
+Because slicing happens at the case level, the exact slice counts in each split depend on the number of slices in each selected case.
+
+---
+
+## Final Data Layout Created by `preprocess_2.ipynb`
+
+The second notebook reads:
+
+```text
+Synapse Abdomen Preprocessed/
+├── Train/
+├── Test/
+└── Synapse Lists/
+```
+
+and writes the split to `Preprocessed/`:
+
+- `Train/`: `.npz` slices belonging to training cases
+- `Val/`: `.npz` slices belonging to validation cases
+- `Val_vol/`: optional reconstructed 3D validation volumes saved as `.npy.h5`
+- `Test/`: original 3D test volumes copied unchanged
+- `Synapse Lists/`: case and slice lists for all final splits
+
+Validation volumes are enabled by:
+
+```python
+SAVE_VAL_VOLUMES = True
+```
+
+Each validation volume is reconstructed by stacking its 2D slices in slice-index order. The resulting HDF5 volume uses the same `image` and `label` datasets as the test volumes.
 
 ---
 
@@ -195,7 +269,7 @@ For a normal training slice:
 ```python
 import numpy as np
 
-path = "./Synapse Abdomen Preprocessed/Train/case0001_slice001.npz"
+path = "./Preprocessed/Train/case0001_slice001.npz"
 data = np.load(path)
 
 img = data["image"]
@@ -262,7 +336,7 @@ In this project, the common size is:
 ```python
 import h5py
 
-path = "Synapse Abdomen Preprocessed/Test/case0001.npy.h5"
+path = "./Preprocessed/Test/case0001.npy.h5"
 with h5py.File(path, "r") as f:
     img = f["image"][:]
     label = f["label"][:]
@@ -299,9 +373,11 @@ with open(os.path.join(list_dir, "test_vol.txt"), "w") as f:
         f.write(name + "\n")
 ```
 
-The generated list files contain:
+The second notebook writes these additional list files:
 
 - `train.txt`: one training sample identifier per line, such as `case0001_slice001`
+- `val.txt`: one validation sample identifier per line, such as `case0020_slice001`
+- `val_vol.txt`: one validation case identifier per line, such as `case0020`
 - `test_vol.txt`: one test volume identifier per line, such as `case0001`
 
 These files are useful when you want to build a DataLoader or manage dataset splits in a training script.
@@ -325,6 +401,14 @@ These files are useful when you want to build a DataLoader or manage dataset spl
 - Datasets: `image`, `label`
 - `image`: `np.ndarray`, shape `(512, 512, num_slices)`, dtype `float32`
 - `label`: `np.ndarray`, shape `(512, 512, num_slices)`, dtype `uint8`
+
+### Validation items
+
+- Slice format: `.npz`
+- Keys: `image`, `label`
+- Optional volume format: `.npy.h5`
+- Validation slices use the same array shapes and dtypes as training slices
+- Validation volumes use the same array shapes and dtypes as test volumes
 
 ---
 
@@ -371,7 +455,7 @@ for old_label, new_label in label_mapping.items():
 ```python
 import numpy as np
 
-sample = np.load("./Synapse Abdomen Preprocessed/Train/case0001_slice001.npz")
+sample = np.load("./Preprocessed/Train/case0001_slice001.npz")
 image = sample["image"]
 label = sample["label"]
 
@@ -389,7 +473,7 @@ This tells you:
 ```python
 import h5py
 
-with h5py.File("././Synapse Abdomen Preprocessed/Test/case0001.npy.h5", "r") as f:
+with h5py.File("./Preprocessed/Test/case0001.npy.h5", "r") as f:
     image = f["image"][:]
     label = f["label"][:]
 
@@ -406,6 +490,8 @@ This gives you the full 3D case for inference or evaluation.
 This preprocessing pipeline intentionally separates the data into:
 
 - 2D slices for training, because many segmentation models train on slices
+- 2D slices for validation, split by case to avoid slice-level leakage
+- Optional reconstructed 3D volumes for validation
 - 3D volumes for testing, because full volumes are often used during validation or inference
 
 The key point to remember is:
@@ -413,6 +499,7 @@ The key point to remember is:
 - `image` always stores the normalized CT intensity data
 - `label` always stores the segmentation mask
 - training examples are saved as `.npz` archives
+- validation examples are saved as `.npz` archives and optionally as 3D `.npy.h5` volumes
 - test examples are saved as HDF5 files
 - both use `float32` for images and `uint8` for labels
 
